@@ -122,11 +122,11 @@ public class OrderServiceCrudTests
 
         _orderRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(existing);
         _productRepo.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<int>>())).ReturnsAsync(products);
-        _orderRepo.Setup(r => r.UpdateAsync(It.IsAny<Order>())).Returns(Task.CompletedTask);
+        _orderRepo.Setup(r => r.UpdateAsync(It.IsAny<Order>(), It.IsAny<IEnumerable<OrderProduct>>())).Returns(Task.CompletedTask);
 
         await _service.UpdateAsync(1, new CreateOrderDto([1]));
 
-        _orderRepo.Verify(r => r.UpdateAsync(It.IsAny<Order>()), Times.Once);
+        _orderRepo.Verify(r => r.UpdateAsync(It.IsAny<Order>(), It.IsAny<IEnumerable<OrderProduct>>()), Times.Once);
     }
 
     [Fact]

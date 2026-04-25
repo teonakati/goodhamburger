@@ -34,19 +34,16 @@ public class OrderRepository : IOrderRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(Order order)
+    public async Task UpdateAsync(Order order, IEnumerable<OrderProduct> newProducts)
     {
-        // Load tracked copy with current products
         var tracked = await _context.Orders
             .Include(o => o.OrderProducts)
             .FirstAsync(o => o.Id == order.Id);
 
-        // Update scalar fields
         tracked.Update(order.Subtotal, order.Discount, order.Total);
 
-        // Replace products
         _context.OrderProducts.RemoveRange(tracked.OrderProducts);
-        _context.OrderProducts.AddRange(order.OrderProducts);
+        _context.OrderProducts.AddRange(newProducts);
 
         await _context.SaveChangesAsync();
     }

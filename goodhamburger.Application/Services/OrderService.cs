@@ -54,10 +54,10 @@ public class OrderService : IOrderService
         var (subtotal, discount, total) = Calculate(products);
 
         existing.Update(subtotal, discount, total);
-        foreach (var product in products)
-            existing.AddProduct(new OrderProduct(existing.Id, product.Id, product.Price));
 
-        await _orderRepository.UpdateAsync(existing);
+        var newOrderProducts = products.Select(p => new OrderProduct(existing.Id, p.Id, p.Price));
+
+        await _orderRepository.UpdateAsync(existing, newOrderProducts);
     }
 
     public async Task DeleteAsync(int id) =>
