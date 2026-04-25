@@ -1,0 +1,39 @@
+# Build output — all layers
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+*.userprefs
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/
+!**/packages/build/
+nuget.config
+
+# Entity Framework migrations temp
+*.mdb
+
+# Runtime / publish output
+**/publish/
+**/out/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets — never commit
+**/appsettings.*.json
+!**/appsettings.json
+!**/appsettings.Development.json
