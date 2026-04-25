@@ -1,0 +1,147 @@
+@page "/orders/create"
+@page "/orders/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@(Id == 0 ? "New Order" : "Edit Order")</PageTitle>
+<h3>@(Id == 0 ? "New Order" : "Edit Order")</h3>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (allProducts is null)
+{
+    <p>Loading products...</p>
+}
+else
+{
+    <div style="max-width:520px">
+
+        @foreach (var group in ProductGroups)
+        {
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small fw-bold">@group.Label</h6>
+                <div class="list-group">
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="radio"
+                               name="@group.Type.ToString()"
+                               checked="@(SelectedId(group.Type) == null)"
+                               @onchange="() => SetSelected(group.Type, null)" />
+                        None
+                    </label>
+                    @foreach (var p in allProducts.Where(p => p.Type == group.Type))
+                    {
+                        <label class="list-group-item">
+                            <input class="form-check-input me-2" type="radio"
+                                   name="@group.Type.ToString()"
+                                   checked="@(SelectedId(group.Type) == p.Id)"
+                                   @onchange="() => SetSelected(group.Type, p.Id)" />
+                            @p.Name
+                            <span class="text-muted ms-2">@p.Price.ToString("C2")</span>
+                        </label>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (DiscountHint is not null)
+        {
+            <div class="alert alert-success py-2">
+                <strong>@DiscountHint.Label</strong> — @DiscountHint.Rate% discount applied
+            </div>
+        }
+
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" @onclick="Submit">Save</button>
+            <a href="/orders" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private List<ProductDto>? allProducts;
+    private string? error;
+
+    private int? selectedSandwichId;
+    private int? selectedSideDishId;
+    private int? selectedDrinkId;
+
+    private record TypeGroup(ProductType Type, string Label);
+
+    private static readonly TypeGroup[] ProductGroups =
+    [
+        new(ProductType.Sandwich, "Sandwich"),
+        new(ProductType.SideDish, "Side Dish"),
+        new(ProductType.Drink,    "Drink"),
+    ];
+
+    private record DiscountInfo(string Label, int Rate);
+
+    private DiscountInfo? DiscountHint => (selectedSandwichId.HasValue, selectedSideDishId.HasValue, selectedDrinkId.HasValue) switch
+    {
+        (true, true, true)  => new("Sandwich + Side Dish + Drink", 20),
+        (true, false, true) => new("Sandwich + Drink", 15),
+        (true, true, false) => new("Sandwich + Side Dish", 10),
+        _                   => null
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        allProducts = await Api.GetProductsAsync() ?? [];
+
+        if (Id == 0) return;
+
+        var order = await Api.GetOrderAsync(Id);
+        if (order is null) { Nav.NavigateTo("/orders"); return; }
+
+        foreach (var op in order.Products)
+        {
+            var product = allProducts.FirstOrDefault(p => p.Id == op.ProductId);
+            if (product is null) continue;
+            SetSelected(product.Type, op.ProductId);
+        }
+    }
+
+    private int? SelectedId(ProductType type) => type switch
+    {
+        ProductType.Sandwich => selectedSandwichId,
+        ProductType.SideDish => selectedSideDishId,
+        ProductType.Drink    => selectedDrinkId,
+        _                    => null
+    };
+
+    private void SetSelected(ProductType type, int? id)
+    {
+        switch (type)
+        {
+            case ProductType.Sandwich: selectedSandwichId = id; break;
+            case ProductType.SideDish: selectedSideDishId = id; break;
+            case ProductType.Drink:    selectedDrinkId    = id; break;
+        }
+    }
+
+    private async Task Submit()
+    {
+        error = null;
+        var ids = new[] { selectedSandwichId, selectedSideDishId, selectedDrinkId }
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .ToList();
+
+        var dto = new CreateOrderDto(ids);
+
+        var res = Id == 0
+            ? await Api.CreateOrderAsync(dto)
+            : await Api.UpdateOrderAsync(Id, dto);
+
+        if (res.IsSuccessStatusCode)
+            Nav.NavigateTo("/orders");
+        else
+            error = await res.Content.ReadAsStringAsync();
+    }
+}

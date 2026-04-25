@@ -1,0 +1,78 @@
+@page "/orders"
+@rendermode InteractiveServer
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Orders</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Orders</h3>
+    <a href="/orders/create" class="btn btn-primary">+ New Order</a>
+</div>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (orders is null)
+{
+    <p>Loading...</p>
+}
+else if (orders.Count == 0)
+{
+    <p class="text-muted">No orders placed yet.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Products</th>
+                <th class="text-end">Subtotal</th>
+                <th class="text-end">Discount</th>
+                <th class="text-end">Total</th>
+                <th>Created At</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in orders)
+            {
+                <tr>
+                    <td>@o.Id</td>
+                    <td>@string.Join(", ", o.Products.Select(p => p.ProductName))</td>
+                    <td class="text-end">@o.Subtotal.ToString("C2")</td>
+                    <td class="text-end text-success">-@o.Discount.ToString("C2")</td>
+                    <td class="text-end fw-bold">@o.Total.ToString("C2")</td>
+                    <td>@o.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="text-end">
+                        <a href="/orders/edit/@o.Id" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(o.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<OrderDto>? orders;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try { orders = await Api.GetOrdersAsync() ?? []; }
+        catch { error = "Failed to load orders."; }
+    }
+
+    private async Task Delete(int id)
+    {
+        var res = await Api.DeleteOrderAsync(id);
+        if (res.IsSuccessStatusCode) await Load();
+        else error = "Failed to delete order.";
+    }
+}

@@ -1,0 +1,74 @@
+@page "/products"
+@rendermode InteractiveServer
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Products</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Products</h3>
+    <a href="/products/create" class="btn btn-primary">+ New Product</a>
+</div>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (products is null)
+{
+    <p>Loading...</p>
+}
+else if (products.Count == 0)
+{
+    <p class="text-muted">No products registered.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Type</th>
+                <th>Created At</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td>@p.Price.ToString("C2")</td>
+                    <td>@p.TypeDescription</td>
+                    <td>@p.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td class="text-end">
+                        <a href="/products/edit/@p.Id" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(p.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ProductDto>? products;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try { products = await Api.GetProductsAsync() ?? []; }
+        catch { error = "Failed to load products."; }
+    }
+
+    private async Task Delete(int id)
+    {
+        var res = await Api.DeleteProductAsync(id);
+        if (res.IsSuccessStatusCode) await Load();
+        else error = "Failed to delete product.";
+    }
+}
