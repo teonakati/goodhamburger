@@ -40,7 +40,6 @@ public class OrderService : IOrderService
 
         await _orderRepository.AddAsync(order);
 
-        // Reload to populate Product navigation on each OrderProduct
         var created = await _orderRepository.GetByIdAsync(order.Id);
         return ToDto(created!);
     }
@@ -64,11 +63,8 @@ public class OrderService : IOrderService
     public async Task DeleteAsync(int id) =>
         await _orderRepository.DeleteAsync(id);
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
     private async Task<List<Product>> LoadAndValidateProducts(List<int> productIds)
     {
-        // Duplicate IDs in the request
         var duplicates = productIds.GroupBy(id => id).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
         if (duplicates.Count > 0)
             throw new InvalidOperationException(
@@ -81,7 +77,6 @@ public class OrderService : IOrderService
             throw new KeyNotFoundException(
                 $"Products not found: {string.Join(", ", missing)}.");
 
-        // Max 1 per type
         if (products.Count(p => p.Type == ProductType.Sandwich) > 1)
             throw new InvalidOperationException("An order can only contain one sandwich.");
         if (products.Count(p => p.Type == ProductType.SideDish) > 1)
@@ -92,19 +87,20 @@ public class OrderService : IOrderService
         return products;
     }
 
+    private static readonly IReadOnlyList<(IReadOnlySet<ProductType> RequiredTypes, decimal Rate)> DiscountRules =
+    [
+        (new HashSet<ProductType> { ProductType.Sandwich, ProductType.SideDish, ProductType.Drink }, 0.20m),
+        (new HashSet<ProductType> { ProductType.Sandwich, ProductType.Drink },                       0.15m),
+        (new HashSet<ProductType> { ProductType.Sandwich, ProductType.SideDish },                    0.10m),
+    ];
+
     private static (decimal subtotal, decimal discount, decimal total) Calculate(List<Product> products)
     {
-        var hasSandwich = products.Any(p => p.Type == ProductType.Sandwich);
-        var hasSideDish = products.Any(p => p.Type == ProductType.SideDish);
-        var hasDrink    = products.Any(p => p.Type == ProductType.Drink);
+        var presentTypes = products.Select(p => p.Type).ToHashSet();
 
-        var rate = (hasSandwich, hasSideDish, hasDrink) switch
-        {
-            (true, true, true)   => 0.20m,
-            (true, false, true)  => 0.15m,
-            (true, true, false)  => 0.10m,
-            _                    => 0m
-        };
+        var rate = DiscountRules
+            .FirstOrDefault(r => r.RequiredTypes.IsSubsetOf(presentTypes))
+            .Rate;
 
         var subtotal = products.Sum(p => p.Price);
         var discount = Math.Round(subtotal * rate, 2);
