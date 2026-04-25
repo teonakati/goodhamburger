@@ -12,7 +12,7 @@ using goodhamburger.Infrastructure.Context;
 namespace goodhamburger.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260425015822_InitialCreate")]
+    [Migration("20260425022837_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -42,6 +42,10 @@ namespace goodhamburger.Infrastructure.Migrations
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("DISCOUNT");
 
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("SUBTOTAL");
+
                     b.Property<decimal>("Total")
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("TOTAL");
@@ -49,6 +53,27 @@ namespace goodhamburger.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ORDER", (string)null);
+                });
+
+            modelBuilder.Entity("goodhamburger.Domain.Entities.OrderProduct", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ORDER_ID");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("PRODUCT_ID");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("PRICE");
+
+                    b.HasKey("OrderId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ORDER_PRODUCT", (string)null);
                 });
 
             modelBuilder.Entity("goodhamburger.Domain.Entities.Product", b =>
@@ -121,8 +146,32 @@ namespace goodhamburger.Infrastructure.Migrations
                             CreatedAt = new DateTime(2026, 4, 24, 0, 0, 0, 0, DateTimeKind.Utc),
                             Name = "Refrigerante",
                             Price = 2.5m,
-                            Type = 2
+                            Type = 3
                         });
+                });
+
+            modelBuilder.Entity("goodhamburger.Domain.Entities.OrderProduct", b =>
+                {
+                    b.HasOne("goodhamburger.Domain.Entities.Order", "Order")
+                        .WithMany("OrderProducts")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("goodhamburger.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("goodhamburger.Domain.Entities.Order", b =>
+                {
+                    b.Navigation("OrderProducts");
                 });
 #pragma warning restore 612, 618
         }

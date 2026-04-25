@@ -16,8 +16,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("ID")
             .UseIdentityAlwaysColumn();
 
-        builder.Property(o => o.Total)
-            .HasColumnName("TOTAL")
+        builder.Property(o => o.Subtotal)
+            .HasColumnName("SUBTOTAL")
             .HasColumnType("numeric(10,2)")
             .IsRequired();
 
@@ -26,8 +26,17 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnType("numeric(10,2)")
             .IsRequired();
 
+        builder.Property(o => o.Total)
+            .HasColumnName("TOTAL")
+            .HasColumnType("numeric(10,2)")
+            .IsRequired();
+
         builder.Property(o => o.CreatedAt)
             .HasColumnName("CREATED_AT")
             .IsRequired();
+
+        builder.Navigation(o => o.OrderProducts)
+            .HasField("_orderProducts")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

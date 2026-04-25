@@ -23,14 +23,25 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var order = await _service.GetByIdAsync(id);
-        return order is null ? NotFound() : Ok(order);
+        return order is null ? NotFound(new { message = $"Order {id} not found." }) : Ok(order);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
     {
-        var created = await _service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        try
+        {
+            var created = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -41,9 +52,13 @@ public class OrderController : ControllerBase
             await _service.UpdateAsync(id, dto);
             return NoContent();
         }
-        catch (KeyNotFoundException)
+        catch (InvalidOperationException ex)
         {
-            return NotFound();
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
     }
 
@@ -55,9 +70,9 @@ public class OrderController : ControllerBase
             await _service.DeleteAsync(id);
             return NoContent();
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException ex)
         {
-            return NotFound();
+            return NotFound(new { message = ex.Message });
         }
     }
 }

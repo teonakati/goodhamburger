@@ -10,11 +10,13 @@ public class AppDbContext : DbContext
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderProduct> OrderProducts => Set<OrderProduct>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderProductConfiguration());
     }
 }

@@ -40,7 +40,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             new { Id = 2, Name = "X-Bacon",       Price = 7m,   Type = ProductType.Sandwich, CreatedAt = new DateTime(2026, 4, 24, 0, 0, 0, DateTimeKind.Utc) },
             new { Id = 3, Name = "X-Egg",         Price = 4.5m, Type = ProductType.Sandwich, CreatedAt = new DateTime(2026, 4, 24, 0, 0, 0, DateTimeKind.Utc) },
             new { Id = 4, Name = "Batata Frita",  Price = 2m,   Type = ProductType.SideDish, CreatedAt = new DateTime(2026, 4, 24, 0, 0, 0, DateTimeKind.Utc) },
-            new { Id = 5, Name = "Refrigerante",  Price = 2.5m, Type = ProductType.SideDish, CreatedAt = new DateTime(2026, 4, 24, 0, 0, 0, DateTimeKind.Utc) }
+            new { Id = 5, Name = "Refrigerante",  Price = 2.5m, Type = ProductType.Drink,    CreatedAt = new DateTime(2026, 4, 24, 0, 0, 0, DateTimeKind.Utc) }
         );
     }
 }

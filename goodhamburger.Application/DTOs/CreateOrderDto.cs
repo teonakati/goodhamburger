@@ -1,6 +1,3 @@
 namespace goodhamburger.Application.DTOs;
 
-public record CreateOrderDto(
-    decimal Total,
-    decimal Discount
-);
+public record CreateOrderDto(List<int> ProductIds);

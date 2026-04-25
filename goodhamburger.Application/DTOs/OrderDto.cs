@@ -2,8 +2,9 @@ namespace goodhamburger.Application.DTOs;
 
 public record OrderDto(
     int Id,
-    decimal Total,
+    decimal Subtotal,
     decimal Discount,
-    decimal NetTotal,
-    DateTime CreatedAt
+    decimal Total,
+    DateTime CreatedAt,
+    IEnumerable<OrderProductDto> Products
 );

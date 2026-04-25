@@ -15,10 +15,18 @@ public class OrderRepository : IOrderRepository
     }
 
     public async Task<IEnumerable<Order>> GetAllAsync() =>
-        await _context.Orders.AsNoTracking().ToListAsync();
+        await _context.Orders
+            .Include(o => o.OrderProducts)
+            .ThenInclude(op => op.Product)
+            .AsNoTracking()
+            .ToListAsync();
 
     public async Task<Order?> GetByIdAsync(int id) =>
-        await _context.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
+        await _context.Orders
+            .Include(o => o.OrderProducts)
+            .ThenInclude(op => op.Product)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == id);
 
     public async Task AddAsync(Order order)
     {
@@ -28,7 +36,18 @@ public class OrderRepository : IOrderRepository
 
     public async Task UpdateAsync(Order order)
     {
-        _context.Orders.Update(order);
+        // Load tracked copy with current products
+        var tracked = await _context.Orders
+            .Include(o => o.OrderProducts)
+            .FirstAsync(o => o.Id == order.Id);
+
+        // Update scalar fields
+        tracked.Update(order.Subtotal, order.Discount, order.Total);
+
+        // Replace products
+        _context.OrderProducts.RemoveRange(tracked.OrderProducts);
+        _context.OrderProducts.AddRange(order.OrderProducts);
+
         await _context.SaveChangesAsync();
     }
 

@@ -24,6 +24,9 @@ public class ProductRepository : IProductRepository
     public async Task<Product?> GetByIdAsync(int id) =>
         await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
 
+    public async Task<IEnumerable<Product>> GetByIdsAsync(IEnumerable<int> ids) =>
+        await _context.Products.AsNoTracking().Where(p => ids.Contains(p.Id)).ToListAsync();
+
     public async Task AddAsync(Product product)
     {
         await _context.Products.AddAsync(product);
